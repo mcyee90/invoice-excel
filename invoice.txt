@@ -1,0 +1,82 @@
+Sub createInvoice()
+    Dim inventory, invoice, taxrate, custName, custAdd1, custAdd2, custAdd3, custPhone, invoiceNumber As Range
+    Set inventory = Range("FullInventory!inventory")
+    Set invoice = Range("Invoice!A10")
+    Set custName = Range("OtherInputs!B1")
+    Set custAdd1 = Range("OtherInputs!B2")
+    Set custAdd2 = Range("OtherInputs!B3")
+    Set custAdd3 = Range("OtherInputs!B4")
+    Set custPhone = Range("OtherInputs!B5")
+    Set invoiceNumber = Range("OtherInputs!B6")
+    Set taxrate = Range("OtherInputs!B7")
+    
+    inventory.Parent.Select
+    inventory.Parent.AutoFilterMode = False
+    inventory.AutoFilter Field:=1, Criteria1:=">0"
+    inventory.Parent.AutoFilter.Range.Copy
+    
+    With invoice
+        .PasteSpecial xlPasteValues
+        Application.CutCopyMode = False
+    End With
+    
+    inventory.Parent.AutoFilterMode = False
+    
+    Worksheets("Invoice").Activate
+    
+    Dim lastRow, fee As Integer
+    Dim itemCost, itemPrice, totalCost, totalPrice, totalQuantity, grandTotal As Double
+    totalQuantity = 0
+    totalCost = 0
+    totalPrice = 0
+    lastRow = Str(Cells(Rows.Count, 1).End(xlUp).Row)
+    
+    For i = 11 To lastRow
+        Quantity = Cells(i, 1).Value
+        cost = Quantity * Cells(i, 4).Value
+        Price = Quantity * Cells(i, 5).Value
+        Cells(i, 4).Value = cost
+        Cells(i, 5).Value = Price
+        totalQuanity = totalQuantity + Quantity
+        totalCost = totalCost + cost
+        totalPrice = totalPrice + Price
+    Next i
+    
+    Cells(lastRow + 2, 1).Value = "Subtotal"
+    Cells(lastRow + 2, 5).Value = totalPrice
+    Cells(lastRow + 3, 1).Value = "Tax " & Str(taxrate * 100) & "% Tax Rate)"
+    taxes = totalPrice * taxrate
+    Cells(lastRow + 3, 5).Value = taxes
+    Cells(lastRow + 4, 1).Value = "Shipping and Fees"
+    If totalQuantity <= 7 Then
+        fee = 10
+    ElseIf totalQuanity <= 14 Then
+        fee = 5
+    Else
+        fee = 0
+    End If
+    Cells(lastRow + 4, 5).Value = fee
+    grandTotal = totalPrice + taxes + fee
+    Cells(lastRow + 5, 1).Value = "Grand Total"
+    Cells(lastRow + 5, 5).Value = grandTotal
+
+    Cells(1, 2).Value = custName
+    Cells(2, 2).Value = custAdd1
+    Cells(3, 2).Value = custAdd2
+    Cells(4, 2).Value = custAdd3
+    Cells(5, 2).Value = custPhone
+    Cells(7, 2).Value = Str(invoiceNumber)
+    
+    Range("A1").Select
+    
+End Sub
+
+Sub clearInvoice()
+    Worksheets("Invoice").Activate
+    invoicerows = Cells(Rows.Count, 1).End(xlUp).Row
+    If invoicerows > 10 Then
+        Range("A11:E" & invoicerows).Clear
+        Range("B1:B9").Clear
+    End If
+    Range("A1").Select
+End Sub
